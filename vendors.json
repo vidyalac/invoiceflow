@@ -1,0 +1,62 @@
+[
+  {
+    "id": "V001",
+    "name": "Northwind Office Supplies Ltd",
+    "email": "ar@northwind-supplies.example",
+    "bank": "4022889103",
+    "terms_days": 30,
+    "approved": true,
+    "address": [
+      "12 Commerce Street",
+      "Chicago, IL 60601"
+    ]
+  },
+  {
+    "id": "V002",
+    "name": "Apex Cloud Services Pvt Ltd",
+    "email": "billing@apexcloud.example",
+    "bank": "5530127788",
+    "terms_days": 30,
+    "approved": true,
+    "address": [
+      "88 Tech Park Road",
+      "San Jose, CA 95112"
+    ]
+  },
+  {
+    "id": "V003",
+    "name": "BlueRiver Logistics LLC",
+    "email": "accounts@blueriver-log.example",
+    "bank": "7781203349",
+    "terms_days": 45,
+    "approved": true,
+    "address": [
+      "301 Harbor Drive",
+      "Long Beach, CA 90802"
+    ]
+  },
+  {
+    "id": "V004",
+    "name": "Meridian Print & Packaging Inc",
+    "email": "finance@meridianprint.example",
+    "bank": "3109987215",
+    "terms_days": 30,
+    "approved": true,
+    "address": [
+      "77 Press Lane",
+      "Dallas, TX 75201"
+    ]
+  },
+  {
+    "id": "V005",
+    "name": "Helios Facility Management",
+    "email": "invoices@helios-fm.example",
+    "bank": "6624410087",
+    "terms_days": 15,
+    "approved": true,
+    "address": [
+      "5 Sunrise Avenue",
+      "Phoenix, AZ 85004"
+    ]
+  }
+]

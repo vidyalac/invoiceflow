@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InvoiceFlow · AP automation</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#0f172a;--mut:#64748b;--line:#e4e7ec;--acc:#4f46e5;--acc2:#eef2ff;
+--ok:#15803d;--okbg:#dcfce7;--note:#0f766e;--notebg:#ccfbf1;--hold:#b45309;--holdbg:#fef3c7;--rej:#b91c1c;--rejbg:#fee2e2;--esc:#6d28d9;--escbg:#ede9fe;
+--r:12px;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+button{font:inherit;cursor:pointer}
+.top{display:flex;align-items:center;gap:28px;padding:0 24px;height:56px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.brand{font-weight:700;font-size:16px;display:flex;align-items:center;gap:8px}.brand i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;background:var(--acc);color:#fff;font-style:normal;font-size:14px}
+.brand small{font-weight:500;color:var(--mut);font-size:12px;margin-left:2px}
+nav{display:flex;gap:4px;height:100%}nav button{border:0;background:none;padding:0 14px;color:var(--mut);font-weight:600;border-bottom:2px solid transparent;height:100%}
+nav button.active{color:var(--acc);border-color:var(--acc)}
+main{padding:20px 24px;max-width:1560px;margin:0 auto}
+.grid{display:grid;grid-template-columns:330px minmax(380px,1fr) 440px;gap:16px;align-items:start}
+@media(max-width:1180px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card h2,.card h3{margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+.drop{border:2px dashed #c7cbe0;border-radius:var(--r);padding:20px;text-align:center;background:#fafbff;transition:.15s}
+.drop.over{border-color:var(--acc);background:var(--acc2)}
+.drop b{display:block;font-size:15px}.drop span{color:var(--mut);font-size:12px}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:600}.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn.sm{padding:5px 10px;font-size:12px}
+#samples{max-height:calc(100vh - 330px);min-height:260px;overflow:auto;padding-right:4px}
+.grp{margin:14px 0 6px;font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.sample{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;background:#fff}
+.sample:hover{border-color:#b6bbe8}.sample .t{font-weight:600;font-size:13px}.sample .d{color:var(--mut);font-size:12px;margin-top:2px}
+.sample .go{margin-left:auto;flex:none}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--acc2);color:var(--acc);margin-right:4px;vertical-align:1px}
+.tag.edge{background:#fff1e6;color:#c2410c}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap}
+.pill.APPROVE{background:var(--okbg);color:var(--ok)}.pill.APPROVE_WITH_NOTE{background:var(--notebg);color:var(--note)}
+.pill.HOLD{background:var(--holdbg);color:var(--hold)}.pill.REJECT{background:var(--rejbg);color:var(--rej)}.pill.ESCALATE{background:var(--escbg);color:var(--esc)}
+/* stages */
+.runhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.runhead .fn{font-weight:700;word-break:break-all}.runhead small{color:var(--mut)}
+.stage{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;overflow:hidden}
+.stage.running{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc2)}
+.stage.pending,.stage.skipped{opacity:.55}
+.sline{display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer}
+.sicon{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:#eef0f4;color:var(--mut)}
+.ok .sicon{background:var(--okbg);color:var(--ok)}.warn .sicon{background:var(--holdbg);color:var(--hold)}.fail .sicon,.error .sicon{background:var(--rejbg);color:var(--rej)}
+.running .sicon{background:none;border:3px solid var(--acc2);border-top-color:var(--acc);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sbody{flex:1;min-width:0}.sname{font-weight:600}.ssum{color:var(--mut);font-size:12.5px}.sms{color:var(--mut);font-size:11px;flex:none}
+.checks{list-style:none;margin:0;padding:2px 12px 10px 50px}
+.checks li{display:flex;gap:8px;padding:4px 0;font-size:12.5px;border-top:1px dashed #eef0f4}
+.checks li:first-child{border-top:0}.checks .cl{flex:none;width:118px;color:var(--mut);font-weight:600}
+.checks .ct{flex:1}.checks .cs{flex:none;width:14px;font-weight:700}
+.cs.pass{color:var(--ok)}.cs.warn{color:var(--hold)}.cs.fail{color:var(--rej)}.cs.info{color:var(--mut)}
+/* result */
+.banner{border-radius:var(--r);padding:14px 16px;margin-bottom:12px;border:1px solid}
+.banner.APPROVE{background:var(--okbg);color:var(--ok);border-color:#a7e3bb}.banner.APPROVE_WITH_NOTE{background:var(--notebg);color:var(--note);border-color:#8fe0d3}
+.banner.HOLD{background:var(--holdbg);color:var(--hold);border-color:#f6d58b}.banner.REJECT{background:var(--rejbg);color:var(--rej);border-color:#f3b4b4}
+.banner.ESCALATE{background:var(--escbg);color:var(--esc);border-color:#cdb8f5}
+.banner .h{font-size:18px;font-weight:800}.banner .s{color:var(--ink);margin-top:4px;font-size:13px}
+.reasons{margin:0 0 12px;padding:0;list-style:none}
+.reasons li{padding:8px 10px;border-left:3px solid;border-radius:6px;background:#fafafa;margin-bottom:6px;font-size:13px}
+.reasons .code{font-size:10.5px;font-weight:700;letter-spacing:.04em;display:block;margin-bottom:1px}
+.reasons li.NOTE{border-color:#14b8a6}.reasons li.HOLD{border-color:#f59e0b}.reasons li.REJECT{border-color:#ef4444}.reasons li.ESCALATE{border-color:#8b5cf6}
+.next{background:var(--acc2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px}.next b{color:var(--acc)}
+.draft{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:12px;background:#fff;font-size:12.5px;white-space:pre-wrap}
+.draft .dh{font-weight:700;margin-bottom:4px}.draft .dm{color:var(--mut);margin-bottom:6px;white-space:normal}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #eef0f4;font-size:12.5px;vertical-align:top}
+th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click{cursor:pointer}tr.click:hover{background:#f8f9ff}
+.conf{display:inline-block;width:46px;height:6px;border-radius:3px;background:#e5e7eb;vertical-align:middle;margin-right:6px;overflow:hidden}.conf i{display:block;height:100%;background:#22c55e}
+.conf.mid i{background:#f59e0b}.conf.low i{background:#ef4444}
+.bar{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;display:flex}.bar i{display:block;height:100%}
+.poview{margin-bottom:12px}.poview .nums{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:4px}
+details{margin-bottom:12px}summary{cursor:pointer;font-weight:600;color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+iframe.pv{width:100%;height:420px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.empty{color:var(--mut);text-align:center;padding:40px 10px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em}.kpi .l{color:var(--mut);font-size:12px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}@media(max-width:900px){.two{grid-template-columns:1fr}}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:12px}.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--c);margin-right:5px}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:#fff;border-left:1px solid var(--line);box-shadow:-12px 0 30px rgba(15,23,42,.12);z-index:50;overflow:auto;padding:18px}
+.drawer .x{float:right}
+.note{font-size:12.5px;color:var(--mut)}ul.plain{margin:6px 0 0;padding-left:18px}ul.plain li{margin-bottom:4px;font-size:13px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><i>◆</i> InvoiceFlow <small>AP automation · PO matching</small></div>
+  <nav>
+    <button data-tab="process" class="active">Process an invoice</button>
+    <button data-tab="dash">Dashboard</button>
+    <button data-tab="data">Vendors, POs &amp; rules</button>
+  </nav>
+</header>
+<main>
+<section id="tab-process">
+  <div class="grid">
+    <aside>
+      <div class="card">
+        <h2>1 · Drop an invoice</h2>
+        <div class="drop" id="drop"><b>Drop a PDF or image here</b><span>or</span><br>
+          <button class="btn sm" id="pick" style="margin-top:6px">Choose file</button>
+          <input type="file" id="file" accept=".pdf,.png,.jpg,.jpeg" hidden></div>
+        <div id="samples"></div>
+      </div>
+    </aside>
+    <section>
+      <div class="card"><h2>2 · Live run</h2>
+        <div id="runhead" class="runhead"></div>
+        <div id="stages"><div class="empty">Pick a sample or drop a file to watch the pipeline run, stage by stage.</div></div>
+      </div>
+    </section>
+    <aside><div class="card" id="result"><h2>3 · Decision</h2><div class="empty">The decision and its reasons appear here.</div></div></aside>
+  </div>
+</section>
+
+<section id="tab-dash" hidden>
+  <div class="kpis" id="kpis"></div>
+  <div class="two">
+    <div class="card"><h3>Decisions</h3><div id="dist"></div></div>
+    <div class="card"><h3>Top exception reasons</h3><div id="reasons"></div></div>
+  </div>
+  <div class="card"><h3>Run history <span class="note" style="text-transform:none;letter-spacing:0">· click a row for the full audit trail</span></h3><div id="history"></div></div>
+</section>
+
+<section id="tab-data" hidden>
+  <div class="two">
+    <div class="card"><h3>Approved vendor master</h3><div id="vendors"></div></div>
+    <div class="card"><h3>Purchase orders (live balances)</h3><div id="pos"></div></div>
+  </div>
+  <div class="two">
+    <div class="card"><h3>Rule thresholds (configurable)</h3><div id="cfg"></div></div>
+    <div class="card"><h3>Design notes &amp; limitations</h3>
+      <ul class="plain">
+        <li><b>AI reads, rules decide.</b> OCR and text extraction read the invoice. The decision comes from deterministic rules, so the same invoice in the same state always gets the same answer.</li>
+        <li><b>It never guesses.</b> Missing or low-confidence fields become a hold with a drafted question, not a silent assumption.</li>
+        <li><b>2-way match only.</b> There is no goods-receipt data, so this is PO vs invoice, not a full 3-way match.</li>
+        <li><b>Stateful.</b> Split POs are tracked by remaining balance, and every run feeds the duplicate check.</li>
+        <li><b>Fraud signals halt the run</b> before any PO logic is applied.</li>
+      </ul>
+      <p style="margin-top:14px"><button class="btn ghost sm" id="reset">Reset demo data (clears history &amp; PO balances)</button></p>
+    </div>
+  </div>
+</section>
+</main>
+<div class="drawer" id="drawer" hidden></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=n=>n==null?'—':'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const DEC={APPROVE:'Approve',APPROVE_WITH_NOTE:'Approve with note',HOLD:'Hold for review',REJECT:'Reject',ESCALATE:'Escalate'};
+const COL={APPROVE:'#16a34a',APPROVE_WITH_NOTE:'#14b8a6',HOLD:'#f59e0b',REJECT:'#ef4444',ESCALATE:'#8b5cf6'};
+const ICON={pending:'·',running:'',ok:'✓',warn:'!',fail:'✕',error:'✕',skipped:'–'};
+const CS={pass:'✓',warn:'!',fail:'✕',info:'i'};
+const pill=d=>`<span class="pill ${d}">${DEC[d]||d}</span>`;
+const api=async(u,o)=>{const r=await fetch(u,o);if(!r.ok)throw new Error(r.status);return r.json()};
+let expanded=new Set(),autoSeen=new Set(),current=null,timer=null;
+
+// ---------- tabs
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));
+  ['process','dash','data'].forEach(t=>$('#tab-'+t).hidden=t!==b.dataset.tab);
+  if(b.dataset.tab==='dash')loadDash();if(b.dataset.tab==='data')loadData();
+});
+
+// ---------- samples & upload
+async function loadSamples(){
+  const s=await api('/api/samples');let last='';let h='';
+  s.forEach(x=>{
+    if(x.group!==last){h+=`<div class="grp">${esc(x.group)}</div>`;last=x.group}
+    h+=`<div class="sample"><div><div class="t"><span class="tag ${x.tag.startsWith('Edge')?'edge':''}">${esc(x.tag)}</span>${esc(x.title)}</div><div class="d">${esc(x.description)}</div></div>
+    <button class="btn sm go" data-f="${esc(x.file)}">Run</button></div>`;
+  });
+  $('#samples').innerHTML=h;
+  document.querySelectorAll('.go').forEach(b=>b.onclick=()=>{const fd=new FormData();fd.append('sample',b.dataset.f);start(fd)});
+}
+$('#pick').onclick=()=>$('#file').click();
+$('#file').onchange=e=>{if(e.target.files[0])upload(e.target.files[0]);e.target.value=''};
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{if(e.dataTransfer.files[0])upload(e.dataTransfer.files[0])});
+function upload(f){const fd=new FormData();fd.append('file',f);start(fd)}
+async function start(fd){
+  clearInterval(timer);expanded=new Set();autoSeen=new Set();
+  $('#stages').innerHTML='<div class="empty">Starting…</div>';$('#result').innerHTML='<h2>3 · Decision</h2><div class="empty">Working…</div>';
+  try{const r=await api('/api/run',{method:'POST',body:fd});current=r.run_id;poll()}catch(e){$('#stages').innerHTML='<div class="empty">Could not start the run: '+esc(e.message)+'</div>'}
+}
+function poll(){
+  const tick=async()=>{try{const run=await api('/api/runs/'+current);renderRun(run);if(run.status==='done')clearInterval(timer)}catch(e){}};
+  tick();timer=setInterval(tick,350);
+}
+
+// ---------- rendering
+function stagesHTML(run,key){
+  return run.stages.map((s,i)=>{
+    const k=key+s.key,auto=['warn','fail','error'].includes(s.status)||(s.key==='extract'&&s.status==='ok');
+    if(auto&&!autoSeen.has(k)){autoSeen.add(k);expanded.add(k)}
+    const open=expanded.has(k)&&s.checks&&s.checks.length;
+    const wait={pending:'Waiting',running:'Working…'}[s.status];
+    return `<div class="stage ${s.status}"><div class="sline" onclick="tog('${k}')"><span class="sicon">${ICON[s.status]??''}</span>
+      <div class="sbody"><div class="sname">${i+1}. ${esc(s.name)}</div><div class="ssum">${esc(s.summary||wait||'')}</div></div><span class="sms">${s.ms!=null?s.ms+' ms':''}</span></div>
+      ${open?`<ul class="checks">${s.checks.map(c=>`<li><span class="cs ${c.state}">${CS[c.state]}</span><span class="cl">${esc(c.label)}</span><span class="ct">${esc(c.text)}</span></li>`).join('')}</ul>`:''}</div>`;
+  }).join('');
+}
+function tog(k){expanded.has(k)?expanded.delete(k):expanded.add(k);if(drawerRun)openDrawerRender();else if(lastRun)renderRun(lastRun)}
+let lastRun=null,drawerRun=null;
+function confBar(c){const p=Math.round(c*100),cl=c<.8?'low':c<.9?'mid':'';return `<span class="conf ${cl}"><i style="width:${p}%"></i></span>${p}%`}
+function fieldsHTML(v){
+  const f=v.fields||{};const L=[['vendor_name','Vendor'],['invoice_no','Invoice no.'],['invoice_date','Date'],['po_ref','PO ref'],['subtotal','Subtotal'],['tax','Tax'],['total','Total'],['bank','Bank acct']];
+  let h='<table><tr><th>Field</th><th>Value</th><th>Confidence</th></tr>';
+  L.forEach(([k,l])=>{const x=f[k];const val=x?(['subtotal','tax','total'].includes(k)?money(x.value):esc(k==='bank'?'…'+String(x.value).slice(-4):x.value)):'<span style="color:#b91c1c;font-weight:600">not found</span>';
+    h+=`<tr><td>${l}</td><td>${val}</td><td>${x?confBar(x.conf):''}</td></tr>`});
+  h+='</table>';
+  if((v.items||[]).length){h+='<table style="margin-top:8px"><tr><th>Line item</th><th class="n">Qty</th><th class="n">Amount</th></tr>'+v.items.map(i=>`<tr><td>${esc(i.description)}</td><td class="n">${i.qty}</td><td class="n">${money(i.amount)}</td></tr>`).join('')+'</table>'}
+  return h;
+}
+function poHTML(p){
+  if(!p)return'';const t=p.total||1,b=p.billed/t*100,i=Math.min(p.this_invoice/t*100,100-b);
+  return `<div class="poview"><h3>PO position · ${esc(p.po_number)}${p.inferred?' <span class="tag edge">inferred</span>':''}</h3>
+  <div class="bar"><i style="width:${b}%;background:#94a3b8"></i><i style="width:${Math.max(i,0)}%;background:#4f46e5"></i></div>
+  <div class="nums"><span>Billed ${money(p.billed)}</span><span>This invoice ${money(p.this_invoice)}</span><span>Remaining after ${money(p.remaining_after)}</span></div>
+  <div class="nums"><span>${esc(p.description)} · PO total ${money(p.total)}</span></div></div>`;
+}
+function resultHTML(run,withPreview){
+  const r=run.result,v=run.view||{};let h='';
+  if(r){
+    h+=`<div class="banner ${r.decision}"><div class="h">${DEC[r.decision]}</div><div class="s">${esc(r.summary)}</div></div>`;
+    if(r.reasons.length)h+=`<h3>Why</h3><ul class="reasons">${r.reasons.map(x=>`<li class="${x.sev}"><span class="code">${x.code} · ${x.sev}</span>${esc(x.msg)}</li>`).join('')}</ul>`;
+    else h+=`<h3>Why</h3><ul class="reasons"><li class="NOTE" style="border-color:#22c55e">Every check passed: required fields, arithmetic, approved vendor, bank details, PO match and duplicate screen.</li></ul>`;
+    h+=`<div class="next"><b>Next action:</b> ${esc(r.next_action)}</div>`;
+    if(r.draft)h+=`<h3>Drafted message</h3><div class="draft"><div class="dh">${esc(r.draft.subject)}</div><div class="dm">To: ${esc(r.draft.to)}</div>${esc(r.draft.body)}</div>`;
+  }
+  h+=poHTML(v.po);
+  if(v.fields)h+=`<h3>Extracted data</h3>${fieldsHTML(v)}`;
+  if(withPreview&&run.id)h+=`<details open style="margin-top:12px"><summary>Original invoice</summary><iframe class="pv" src="/api/file/${run.id}#toolbar=0"></iframe></details>`;
+  return h;
+}
+let previewFor=null;
+function renderRun(run){
+  lastRun=run;
+  const done=run.status==='done';
+  $('#runhead').innerHTML=`<div><div class="fn">${esc(run.filename)}</div><small>${done?`Finished in ${(run.duration_ms/1000).toFixed(1)}s`:'Running…'}</small></div><div>${run.result?pill(run.result.decision):''}</div>`;
+  $('#stages').innerHTML=stagesHTML(run,run.id);
+  const scroller=$('#result');
+  // keep the iframe stable: only (re)build preview once per run
+  if(previewFor!==run.id){previewFor=run.id}
+  scroller.innerHTML='<h2>3 · Decision</h2>'+(run.result||run.view.fields?resultHTML(run,done):'<div class="empty">Working…</div>');
+}
+
+// ---------- dashboard
+async function loadDash(){
+  const [s,runs]=await Promise.all([api('/api/stats'),api('/api/runs')]);
+  const by=s.by,n=s.total;
+  $('#kpis').innerHTML=[
+    [n,'Invoices processed'],[(s.auto_rate*100).toFixed(0)+'%','Auto-approved (no human touch)'],
+    [money(s.approved_amount),'Approved for payment'],[money(s.blocked_amount),'Held, rejected or escalated'],[n?(s.avg_ms/1000).toFixed(1)+'s':'—','Avg processing time']
+  ].map(([v,l])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join('');
+  $('#dist').innerHTML=n?`<div class="bar" style="height:16px">${Object.keys(DEC).map(k=>by[k]?`<i style="width:${by[k]/n*100}%;background:${COL[k]}"></i>`:'').join('')}</div>
+   <div class="legend">${Object.keys(DEC).map(k=>`<span style="--c:${COL[k]}">${DEC[k]} · ${by[k]||0}</span>`).join('')}</div>`:'<div class="empty">No runs yet. Process an invoice first.</div>';
+  const mx=Math.max(1,...s.reasons.map(r=>r[1]));
+  $('#reasons').innerHTML=s.reasons.length?s.reasons.map(([c,k])=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:12.5px"><span style="width:190px;flex:none;font-weight:600">${esc(c)}</span><div class="bar" style="flex:1"><i style="width:${k/mx*100}%;background:#6366f1"></i></div><span>${k}</span></div>`).join(''):'<div class="empty">No exceptions yet.</div>';
+  $('#history').innerHTML=runs.length?`<table><tr><th>Time</th><th>File</th><th>Vendor</th><th>Invoice</th><th class="n">Amount</th><th>PO</th><th>Decision</th><th class="n">Time</th></tr>${runs.map(r=>`<tr class="click" onclick="openDrawer('${r.id}')"><td>${new Date(r.created_at).toLocaleTimeString()}</td><td>${esc(r.filename)}</td><td>${esc(r.vendor_name||'—')}</td><td>${esc(r.invoice_no||'—')}</td><td class="n">${money(r.total)}</td><td>${esc(r.po_number||'—')}</td><td>${pill(r.decision)}</td><td class="n">${(r.duration_ms/1000).toFixed(1)}s</td></tr>`).join('')}</table>`:'<div class="empty">History will appear here.</div>';
+}
+async function openDrawer(id){drawerRun=await api('/api/runs/'+id);openDrawerRender()}
+function openDrawerRender(){
+  const r=drawerRun;expanded.forEach(()=>{});
+  $('#drawer').hidden=false;
+  $('#drawer').innerHTML=`<button class="btn ghost sm x" onclick="closeDrawer()">Close</button><h3>${esc(r.filename)}</h3><div style="margin-bottom:12px">${pill(r.result.decision)} <span class="note">${new Date(r.created_at).toLocaleString()}</span></div>
+  <h3>Pipeline trail</h3>${stagesHTML(r,'d'+r.id)}<div style="margin-top:14px">${resultHTML(r,false)}</div>`;
+}
+function closeDrawer(){drawerRun=null;$('#drawer').hidden=true}
+
+// ---------- data tab
+async function loadData(){
+  const m=await api('/api/master');
+  $('#vendors').innerHTML=`<table><tr><th>ID</th><th>Vendor</th><th>Bank</th><th class="n">Terms</th></tr>${m.vendors.map(v=>`<tr><td>${v.id}</td><td>${esc(v.name)}</td><td>${v.bank}</td><td class="n">Net ${v.terms_days}</td></tr>`).join('')}</table>`;
+  $('#pos').innerHTML=`<table><tr><th>PO</th><th>Description</th><th class="n">Total</th><th class="n">Billed</th><th class="n">Remaining</th></tr>${m.pos.map(p=>`<tr><td>${p.po_number}</td><td>${esc(p.description)}${p.allows_partial?' <span class="tag">split OK</span>':''}</td><td class="n">${money(p.total)}</td><td class="n">${money(p.billed)}</td><td class="n"><b>${money(p.remaining)}</b></td></tr>`).join('')}</table>`;
+  const c=m.config;
+  $('#cfg').innerHTML=`<table>
+   <tr><td>Amount tolerance</td><td>Within <b>${c.tol_pct}%</b> <i>and</i> <b>${money(c.tol_abs)}</b> of the PO balance → approve with a note. Outside → hold.</td></tr>
+   <tr><td>Arithmetic tolerance</td><td>${money(c.line_sum_tol)} rounding</td></tr>
+   <tr><td>Near-duplicate window</td><td>Same vendor + same amount within <b>${c.dup_window_days} days</b></td></tr>
+   <tr><td>Lookalike vendor</td><td>Name similarity ≥ <b>${(c.fuzzy_vendor_threshold*100).toFixed(0)}%</b> to an approved vendor → escalate</td></tr>
+   <tr><td>OCR confidence floor</td><td>Key field below <b>${(c.ocr_min_conf*100).toFixed(0)}%</b> → hold for human check</td></tr>
+   <tr><td>Stale invoice</td><td>Older than <b>${c.stale_days} days</b> → note</td></tr></table>`;
+}
+$('#reset').onclick=async()=>{if(confirm('Clear all run history and reset PO balances?')){await api('/api/reset',{method:'POST'});closeDrawer();loadData();$('#stages').innerHTML='<div class="empty">Data reset. Pick a sample to start.</div>';$('#result').innerHTML='<h2>3 · Decision</h2><div class="empty">The decision and its reasons appear here.</div>';$('#runhead').innerHTML=''}};
+loadSamples();
+</script>
+</body>
+</html>

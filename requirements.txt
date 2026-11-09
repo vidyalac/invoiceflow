@@ -1,0 +1,7 @@
+flask>=3.0
+gunicorn>=22.0
+pdfplumber>=0.11
+pytesseract>=0.3.10
+pillow>=10.0
+reportlab>=4.0
+requests>=2.31

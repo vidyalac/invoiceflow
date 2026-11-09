@@ -1,0 +1,9 @@
+{
+  "tol_pct": 1.0,
+  "tol_abs": 50.0,
+  "line_sum_tol": 0.02,
+  "dup_window_days": 7,
+  "fuzzy_vendor_threshold": 0.85,
+  "ocr_min_conf": 0.8,
+  "stale_days": 120
+}

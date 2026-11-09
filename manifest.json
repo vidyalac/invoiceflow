@@ -1,0 +1,90 @@
+[
+  {
+    "file": "01_happy_northwind.pdf",
+    "title": "Clean invoice, exact PO match",
+    "tag": "Happy path",
+    "group": "Happy path",
+    "description": "Text PDF, tax shown separately, explicit PO reference, amount matches the PO exactly.",
+    "expected": "APPROVE"
+  },
+  {
+    "file": "02_tolerance_blueriver.pdf",
+    "title": "Bundled line, tax embedded, $26 over PO",
+    "tag": "Happy path",
+    "group": "Happy path",
+    "description": "Different layout and date format. One bundled line with tax embedded. Amount is $26 (0.3%) over the PO, inside tolerance.",
+    "expected": "APPROVE_WITH_NOTE"
+  },
+  {
+    "file": "03_implied_po_helios.pdf",
+    "title": "No PO number on the invoice",
+    "tag": "Happy path",
+    "group": "Happy path",
+    "description": "The invoice never mentions a PO. The process infers it from vendor and amount and flags that it did so.",
+    "expected": "APPROVE_WITH_NOTE"
+  },
+  {
+    "file": "04a_split_po_apex_month1.pdf",
+    "title": "Split PO: month 1 of 3",
+    "tag": "Edge case 1",
+    "group": "Edge 1: Split PO",
+    "description": "One PO, three monthly invoices. Approved as a partial invoice; the PO balance drops to $8,640.",
+    "expected": "APPROVE"
+  },
+  {
+    "file": "04b_split_po_apex_month2.pdf",
+    "title": "Split PO: month 2 of 3",
+    "tag": "Edge case 1",
+    "group": "Edge 1: Split PO",
+    "description": "Same vendor, same amount, a month later. NOT a duplicate. Approved; PO balance drops to $4,320. Run after 04a.",
+    "expected": "APPROVE"
+  },
+  {
+    "file": "04c_split_po_apex_overbill.pdf",
+    "title": "Split PO: invoice exceeds remaining balance",
+    "tag": "Edge case 1",
+    "group": "Edge 1: Split PO",
+    "description": "Third invoice includes $8,000 of unplanned extras and would push total billing past the PO. Held. Run after 04a and 04b.",
+    "expected": "HOLD"
+  },
+  {
+    "file": "05_near_duplicate_northwind.pdf",
+    "title": "Resubmitted with a changed invoice number",
+    "tag": "Edge case 2",
+    "group": "Edge 2: Near-duplicate",
+    "description": "Vendor resends sample 01 as 'INV-NW-2041A' with a date one day later. The invoice number differs, so an exact check misses it. Run after 01.",
+    "expected": "HOLD"
+  },
+  {
+    "file": "06_scanned_missing_fields_meridian.pdf",
+    "title": "Scanned image, no invoice number or date",
+    "tag": "Edge case 3",
+    "group": "Edge 3: Scanned + missing data",
+    "description": "Image-only scan that needs OCR. The vendor left off the invoice number and date. The process holds it and drafts a specific question to the vendor instead of guessing.",
+    "expected": "HOLD"
+  },
+  {
+    "file": "07_lookalike_vendor.pdf",
+    "title": "Lookalike vendor name + new bank account",
+    "tag": "Edge case 4",
+    "group": "Edge 4: Possible fraud",
+    "description": "'Northwlnd' (l instead of i), a different bank account, and a 'we changed banks' note. Classic business-email-compromise pattern. Escalated, payment blocked.",
+    "expected": "ESCALATE"
+  },
+  {
+    "file": "08_bank_details_changed_meridian.pdf",
+    "title": "Correct vendor, bank account changed",
+    "tag": "Edge case 4",
+    "group": "Edge 4: Possible fraud",
+    "description": "The vendor name is exactly right but the bank account differs from the vendor master. Escalated for a call-back verification.",
+    "expected": "ESCALATE"
+  },
+  {
+    "file": "09_unknown_vendor.pdf",
+    "title": "Vendor not in the approved list",
+    "tag": "Edge case",
+    "group": "Other",
+    "description": "An invoice from a company that is not an approved vendor. Rejected outright.",
+    "expected": "REJECT"
+  }
+]
